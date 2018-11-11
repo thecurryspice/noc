@@ -1,21 +1,13 @@
 class Router:
-    def __init__(self, [posx, posy], [right, up, left, down]):
-        self.linkProbability = [right, up, left, down]
+    def __init__(self, pos, linkHealthList):
+        self.linkHealth = linkHealthList
+        self.posx, self.posy = pos
         self.threshold = 0.03
-        print("New router initialised with position [" + str(posx) + ", " + str(posy) + "]")
+        print("New router initialised with position [" + str(self.posx) + ", " + str(self.posy) + "]")
 
-    def modifyLinkProbability(self, direction, probability):
-        if(direction == 0):
-            self.linkProbability[0] = probability
-            return True
-        elif(direction == 1):
-            self.linkProbability[1] = probability
-            return True
-        elif(direction == 2):
-            self.linkProbability[2] = probability
-            return True
-        elif(direction == 3):
-            self.linkProbability[3] = probability
+    def modifylinkHealth(self, direction, health):
+        if(direction >= 0 and direction < 4):
+            self.linkHealth[int(direction)] = health
             return True
         else:
             # print("Error: Not a valid direction")
@@ -23,10 +15,10 @@ class Router:
 
     def getHealthyLinks(self):
         # returns an array of healthy (1) and permanent-hard-faulty (0) links
-        array = []
-        for link in self.linkProbability:
-            array.append(1 if link > threshold else 0)
-        return array
+        listLink = []
+        for link in self.linkHealth:
+            listLink.append(1 if link > self.threshold else 0)
+        return listLink
 
     def canTransmit(self, direction):
         # returns true if the router can be used to forward a packet in the mentioned direction
@@ -48,7 +40,7 @@ class Router:
         healthyLinks = self.getHealthyLinks()
         count = 0
         for link in healthyLinks:
-            count = count + 1 if link == 1
+            count = count + 1 if link == 1 else count + 0
         return True if count == 1 else False
 
     def route(self, source, destination):
@@ -56,3 +48,12 @@ class Router:
         t = True if (self.canTransmit(destination)) else False
         r = True if (self.canRecieve(source)) else False
         return [t,r]
+
+    def selectBestLink(self, source):
+        # returns direction of best transmit link
+        # useful in case of local SRN
+        listLink = self.linkHealth
+        # get the link with highest health excluding the source
+        destination = listLink.index(max(listLink.pop(source)))
+        return destination
+
