@@ -6,7 +6,7 @@ class Router:
         # print("New router initialised with position [" + str(self.posx) + ", " + str(self.posy) + "]")
 
     # modifies health for one specific link
-    def modifylinkHealth(self, direction, health):
+    def modifyLinkHealth(self, direction, health):
         if(abs(direction) < 4):
             self.linkHealth[int(direction)] = health
             return True
@@ -43,7 +43,7 @@ class Router:
 
     # returns true if the packet can be used to receive a packet from the mentioned direction
     # although this looks redundant, this function is kept reserved for cases like the Router's mux fault    
-    def canRecieve(self, direction):
+    def canReceive(self, direction):
         healthyLinks = self.getHealthyLinksList()
         return True if(healthyLinks[direction] == 1) else False
     
