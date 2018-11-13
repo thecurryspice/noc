@@ -55,7 +55,7 @@ class Router:
     
     # checks whether a router has been isolated
     def checkIsolated(self):
-        return True if (self.getHealthyLinksList().index(1) == -1) else False
+        return True if (self.getHealthyLinksCount() == 0) else False
     
     # checks whether the router has only one active link
     def checkTerminus(self):
