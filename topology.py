@@ -1,5 +1,6 @@
 from __future__ import print_function
 import random
+from time import sleep
 from router import *
 
 BLUE =  '\033[1;38;2;32;64;227m'
@@ -28,14 +29,14 @@ class Mesh:
 					self.routers[i][j].modifyLinkHealthList([0,1,1,0])
 				elif (i == 0 and (j > 0 and j < self.X-1)):
 					self.routers[i][j].modifyLinkHealthList([1,0,1,1])
-				elif (i == self.Y-1 and (j > 0 and j < self.X - 1)):
+				elif (i == self.Y-1 and (j > 0 and j < self.X-1)):
 					self.routers[i][j].modifyLinkHealthList([0,1,1,1])
 				elif (j == 0 and (i > 0 and i < self.Y - 1)):
 					self.routers[i][j].modifyLinkHealthList([1,1,0,1])
-				elif (j == self.X-1 and (i > 0 and i < self.Y - 1)):
+				elif (j == self.X-1 and (i > 0 and i < self.Y-1)):
 					self.routers[i][j].modifyLinkHealthList([1,1,1,0])
 				else:
-					pass
+					self.routers[i][j].modifyLinkHealthList([1,1,1,1])
 
 	def getDimensions(self):
 		return self.X, self.Y
@@ -78,7 +79,9 @@ class Torus:
 
 	# initialises the topology to with all healthy links
 	def initialise(self):
-		# A torus is initialised by default
+		for i in range(self.Y):
+			for j in range(self.X):
+				self.routers[i][j].modifyLinkHealthList([1,1,1,1])
 		return
 
 	def getDimensions(self):
@@ -126,48 +129,79 @@ I'd prefer a general solution.
 
 A workaround can be to target only healthy links and modify them
 '''
-def injectRandomLinkFaults(topology, n):
+def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.5):
+	X,Y = topology.getDimensions()
+	# a 2D planar topology will have 2*M*N links. Mesh will have M+N-2 less links.
+	if n > 2*X*Y:
+		print("Error: Too many elements. No faults injected.")
+		return
+	original = [i for i in range(X*Y)]
+	for k in range(n):
+		# choose a random router
+		choice = random.choice(original)
+		# get coordinates
+		i = int(choice/X)
+		j = int(choice%X)
+		# choose a random link
+		link = int(4*random.random())
+		# check if the link is healthy
+		if(topology.routers[i][j].getHealthyLinksList()[link] == 1):
+			topology.routers[i][j].modifyLinkHealth(link, 0)
+			if(link == 0):
+				topology.routers[i][wrap(j+1,0,X-1)].modifyLinkHealth(2,0)
+			elif(link == 1):
+				topology.routers[wrap(i-1,0,Y-1)][j].modifyLinkHealth(3,0)
+			elif(link == 2):
+				topology.routers[i][wrap(j-1,0,X-1)].modifyLinkHealth(0,0)
+			else:
+				topology.routers[wrap(i+1,0,Y-1)][j].modifyLinkHealth(1,0)
+			if(animate):
+				topology.printTopologyMap(True)
+				for c in range(2*Y):
+					print("\033[F", end = '')
+					sleep(frameDelay/10)
+		else:
+			try:
+				injectRandomLinkFaults(topology,1)
+			except RuntimeError:
+				print("Maximum recursion depth reached. All links have been marked faulty.")
+				topology.printTopologyMap(True)
+	if(animate):
+			for i in range(2*Y):
+				print("\033[E", end = '')
+		# [round(random.random()),round(random.random()),round(random.random()),round(random.random())]
+
+def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.5):
 	X,Y = topology.getDimensions()
 	if n > X*Y:
 		print("Error: Too many elements. No faults injected.")
 		return
-	selectedi, selectedj = [], []
+	original = [i for i in range(X*Y)]
 	for k in range(n):
-		i = int(Y*random.random())
-		j = int(X*random.random())
-		try:
-			if(selectedi.index(i) == -1 and selectedj.index(j) == -1):
-				k = k-1
-		except:
-			topology.routers[i][j].modifyLinkHealthList([round(random.random()),round(random.random()),round(random.random()),round(random.random())])
-			selectedi.append(i)
-			selectedj.append(j)
-
-
-def injectRandomRouterFaults(topology, n):
-	X,Y = topology.getDimensions()
-	if n > X*Y:
-		print("Error: Too many elements. No faults injected.")
-		return
-	selectedi, selectedj = [], []
-	for k in range(n):
-		i = int(Y*random.random())
-		j = int(X*random.random())
-		try:
-			if(selectedi.index(i) == -1 and selectedj.index(j) == -1):
-				k = k-1
-		except:
-			selectedi.append(i)
-			selectedj.append(j)
-			topology.routers[i][j].modifyLinkHealthList([0,0,0,0])
-			r, u, l, d = wrap(j+1,0,X-1), wrap(i-1,0,Y-1), wrap(j-1,0,X-1), wrap(i+1,0,Y-1) 
-			# print(j+1,i-1,j-1,i+1)
-			# print(r, u, l, d)
-			topology.routers[i][l].modifyLinkHealth(0,0)
-			topology.routers[d][j].modifyLinkHealth(1,0)
-			topology.routers[i][r].modifyLinkHealth(2,0)
-			topology.routers[u][j].modifyLinkHealth(3,0)
-
+		# choose a random router
+		choice = random.choice(original)
+		# get coordinates
+		i = int(choice/X)
+		j = int(choice%X)
+		# kill router
+		topology.routers[i][j].modifyLinkHealthList([0,0,0,0])
+		# modify neighbours
+		r, u, l, d = wrap(j+1,0,X-1), wrap(i-1,0,Y-1), wrap(j-1,0,X-1), wrap(i+1,0,Y-1) 
+		# print(j+1,i-1,j-1,i+1)
+		# print(r, u, l, d)
+		topology.routers[i][l].modifyLinkHealth(0,0)
+		topology.routers[d][j].modifyLinkHealth(1,0)
+		topology.routers[i][r].modifyLinkHealth(2,0)
+		topology.routers[u][j].modifyLinkHealth(3,0)
+		original.remove(choice)
+		if(animate):
+			topology.printTopologyMap(True)
+			for c in range(2*Y):
+				print("\033[F", end = '')
+				sleep(frameDelay/10)
+	if(animate):
+		for i in range(2*Y):
+			print("\033[E", end = '')
 
 def wrap(variable, minval, maxval):
 	# I should use mod here but lite for now
