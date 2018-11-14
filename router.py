@@ -6,7 +6,7 @@ class Router:
         # print("New router initialised with position [" + str(self.posx) + ", " + str(self.posy) + "]")
 
     # modifies health for one specific link
-    def modifyLinkHealth(self, direction, health):
+    def setLinkHealth(self, direction, health):
         if(abs(direction) < 4):
             self.linkHealth[int(direction)] = health
             return True
@@ -15,7 +15,7 @@ class Router:
             return False
 
     # modify health list
-    def modifyLinkHealthList(self, linkHealthList):
+    def setLinkHealthList(self, linkHealthList):
         if(abs(len(linkHealthList) == 4)):
             self.linkHealth = linkHealthList
             return True
@@ -30,6 +30,7 @@ class Router:
             listLink.append(1 if link > self.threshold else 0)
         return listLink
 
+    # returns number of healthy links based on threshold
     def getHealthyLinksCount(self):
         count = 0
         for link in self.getHealthyLinksList():

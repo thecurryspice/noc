@@ -20,23 +20,23 @@ class Mesh:
 		for i in range(self.Y):
 			for j in range(self.X):
 				if(i == 0 and j == 0):
-					self.routers[i][j].modifyLinkHealthList([1,0,0,1])
+					self.routers[i][j].setLinkHealthList([1,0,0,1])
 				elif (i == self.Y-1 and j == 0):
-					self.routers[i][j].modifyLinkHealthList([1,1,0,0])
+					self.routers[i][j].setLinkHealthList([1,1,0,0])
 				elif (i == 0 and j == self.X-1):
-					self.routers[i][j].modifyLinkHealthList([0,0,1,1])
+					self.routers[i][j].setLinkHealthList([0,0,1,1])
 				elif (i == self.Y-1 and j == self.X-1):
-					self.routers[i][j].modifyLinkHealthList([0,1,1,0])
+					self.routers[i][j].setLinkHealthList([0,1,1,0])
 				elif (i == 0 and (j > 0 and j < self.X-1)):
-					self.routers[i][j].modifyLinkHealthList([1,0,1,1])
+					self.routers[i][j].setLinkHealthList([1,0,1,1])
 				elif (i == self.Y-1 and (j > 0 and j < self.X-1)):
-					self.routers[i][j].modifyLinkHealthList([0,1,1,1])
+					self.routers[i][j].setLinkHealthList([0,1,1,1])
 				elif (j == 0 and (i > 0 and i < self.Y - 1)):
-					self.routers[i][j].modifyLinkHealthList([1,1,0,1])
+					self.routers[i][j].setLinkHealthList([1,1,0,1])
 				elif (j == self.X-1 and (i > 0 and i < self.Y-1)):
-					self.routers[i][j].modifyLinkHealthList([1,1,1,0])
+					self.routers[i][j].setLinkHealthList([1,1,1,0])
 				else:
-					self.routers[i][j].modifyLinkHealthList([1,1,1,1])
+					self.routers[i][j].setLinkHealthList([1,1,1,1])
 
 	def getDimensions(self):
 		return self.X, self.Y
@@ -55,7 +55,10 @@ class Mesh:
 						else:
 							print(str(num) + "---", end = "")
 					else:
-						print(str(num) + "---", end = "")
+						if(num == 0):
+							print(" " + "---", end = "")
+						else:
+							print(str(num) + "---", end = "")
 				else:
 					if colour:
 						if(num == 0):
@@ -65,6 +68,9 @@ class Mesh:
 						else:
 							print(str(num))
 					else:
+						if(num == 0):
+							print(" ")
+						else:
 							print(str(num))
 			for j in range(self.X):
 				if(i != self.Y - 1):
@@ -81,7 +87,7 @@ class Torus:
 	def initialise(self):
 		for i in range(self.Y):
 			for j in range(self.X):
-				self.routers[i][j].modifyLinkHealthList([1,1,1,1])
+				self.routers[i][j].setLinkHealthList([1,1,1,1])
 		return
 
 	def getDimensions(self):
@@ -129,7 +135,7 @@ I'd prefer a general solution.
 
 A workaround can be to target only healthy links and modify them
 '''
-def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.5):
+def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.05):
 	X,Y = topology.getDimensions()
 	# a 2D planar topology will have 2*M*N links. Mesh will have M+N-2 less links.
 	if n > 2*X*Y:
@@ -146,15 +152,15 @@ def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.5):
 		link = int(4*random.random())
 		# check if the link is healthy
 		if(topology.routers[i][j].getHealthyLinksList()[link] == 1):
-			topology.routers[i][j].modifyLinkHealth(link, 0)
+			topology.routers[i][j].setLinkHealth(link, 0)
 			if(link == 0):
-				topology.routers[i][wrap(j+1,0,X-1)].modifyLinkHealth(2,0)
+				topology.routers[i][wrap(j+1,0,X-1)].setLinkHealth(2,0)
 			elif(link == 1):
-				topology.routers[wrap(i-1,0,Y-1)][j].modifyLinkHealth(3,0)
+				topology.routers[wrap(i-1,0,Y-1)][j].setLinkHealth(3,0)
 			elif(link == 2):
-				topology.routers[i][wrap(j-1,0,X-1)].modifyLinkHealth(0,0)
+				topology.routers[i][wrap(j-1,0,X-1)].setLinkHealth(0,0)
 			else:
-				topology.routers[wrap(i+1,0,Y-1)][j].modifyLinkHealth(1,0)
+				topology.routers[wrap(i+1,0,Y-1)][j].setLinkHealth(1,0)
 			if(animate):
 				topology.printTopologyMap(True)
 				for c in range(2*Y):
@@ -171,7 +177,7 @@ def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.5):
 				print("\033[E", end = '')
 		# [round(random.random()),round(random.random()),round(random.random()),round(random.random())]
 
-def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.5):
+def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.05):
 	X,Y = topology.getDimensions()
 	if n > X*Y:
 		print("Error: Too many elements. No faults injected.")
@@ -184,15 +190,15 @@ def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.5):
 		i = int(choice/X)
 		j = int(choice%X)
 		# kill router
-		topology.routers[i][j].modifyLinkHealthList([0,0,0,0])
+		topology.routers[i][j].setLinkHealthList([0,0,0,0])
 		# modify neighbours
 		r, u, l, d = wrap(j+1,0,X-1), wrap(i-1,0,Y-1), wrap(j-1,0,X-1), wrap(i+1,0,Y-1) 
 		# print(j+1,i-1,j-1,i+1)
 		# print(r, u, l, d)
-		topology.routers[i][l].modifyLinkHealth(0,0)
-		topology.routers[d][j].modifyLinkHealth(1,0)
-		topology.routers[i][r].modifyLinkHealth(2,0)
-		topology.routers[u][j].modifyLinkHealth(3,0)
+		topology.routers[i][l].setLinkHealth(0,0)
+		topology.routers[d][j].setLinkHealth(1,0)
+		topology.routers[i][r].setLinkHealth(2,0)
+		topology.routers[u][j].setLinkHealth(3,0)
 		original.remove(choice)
 		if(animate):
 			topology.printTopologyMap(True)
