@@ -163,9 +163,9 @@ def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.05):
 				topology.routers[wrap(i+1,0,Y-1)][j].setLinkHealth(1,0)
 			if(animate):
 				topology.printTopologyMap(True)
+				sleep(frameDelay)
 				for c in range(2*Y):
 					print("\033[F", end = '')
-					sleep(frameDelay/10)
 		else:
 			try:
 				injectRandomLinkFaults(topology,1)
@@ -202,9 +202,9 @@ def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.05):
 		original.remove(choice)
 		if(animate):
 			topology.printTopologyMap(True)
+			sleep(frameDelay)
 			for c in range(2*Y):
 				print("\033[F", end = '')
-				sleep(frameDelay/10)
 	if(animate):
 		for i in range(2*Y):
 			print("\033[E", end = '')

@@ -1,11 +1,13 @@
 # NOC (Network On Chips)
 
 This repository contains classes/modules that ease implementation and testing of NOC algorithms on varying topologies.<br>
-This code is made in the hope that it is found useful by scholars working in this domain. 
+This work is done in the hope that it is found useful by scholars working in this domain. 
+
+`test.py` is a sample program and can be used as a quick-start.
 
 ---
 
-# Usage (Topology)
+# Topology
 
 API Documentation for all the classes is yet to be made. Appropriate comments have been made in individual class/files for the programmer's comprehension.
 
@@ -34,9 +36,10 @@ Router or Link faults can be injected easily either by targeting individual rout
 
 ### Individual Targeting
 
-`topo.routers[2][1].setLinkHealthList([0,0,0,0])`<br>
+`topo.routers[2][1].setLinkHealthList([1,1,0,1])`<br>
 
-Here, the function parameter is a list of links' healths in the order right, up, left, down.<br>
+Here, the function parameter is a list of links' healths in the order right([0]), up([1]), left([2]), down([3]).<br>
+`[1,1,0,1]` means that the *left link* has been marked as a permanent fault.<br>
 `[0,0,0,0]` would mean that the router is set as faulty.
 
 
@@ -57,7 +60,8 @@ The topology class contains direct functions for generating 'N' random faults us
 
 # Router
 
-Once the router has been accessed as an element in in a 2D matrix, all functions related to packet-traversal can be used to simulate handling an actual packet.<br>
+Once the router has been accessed as an element in a 2D matrix, all functions related to packet-traversal can be used to simulate handling an actual packet.<br>
+As of now, the Packet object is not accepted in any of Router's functions. Simulations can still be done the usual way using `canTransmit()`, `canReceive()`, and `route()`.<br>
 
 ---
 
@@ -68,5 +72,6 @@ Once the router has been accessed as an element in in a 2D matrix, all functions
 	* virtual stack for path debugging
 	* real header data stack
 	* various metrics like hop-count, latency, etc.
+* Integrate Packet with traversal in the Router function-parameters
 * Add FIFO buffer to router and consider Packet's size in the FIFO
 * Print links in topology map according to link-health
