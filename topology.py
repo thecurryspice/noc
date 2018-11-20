@@ -30,11 +30,11 @@ class Mesh:
 				elif (i == 0 and (j > 0 and j < self.X-1)):
 					self.routers[i][j].setLinkHealthList([1,0,1,1])
 				elif (i == self.Y-1 and (j > 0 and j < self.X-1)):
-					self.routers[i][j].setLinkHealthList([0,1,1,1])
+					self.routers[i][j].setLinkHealthList([1,1,1,0])
 				elif (j == 0 and (i > 0 and i < self.Y - 1)):
 					self.routers[i][j].setLinkHealthList([1,1,0,1])
 				elif (j == self.X-1 and (i > 0 and i < self.Y-1)):
-					self.routers[i][j].setLinkHealthList([1,1,1,0])
+					self.routers[i][j].setLinkHealthList([0,1,1,1])
 				else:
 					self.routers[i][j].setLinkHealthList([1,1,1,1])
 
