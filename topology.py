@@ -124,6 +124,47 @@ class Torus:
 			print()
 
 
+# Common topology functions
+
+def injectLinkFault(topology, pos, direction):
+	X,Y = topology.getDimensions()
+	j,i = pos	# position of the router
+	print(j,i)
+	if(j > X-1 or i > Y-1):
+		print("Index out of range for given topology")
+		return False
+	else:
+		# return true only if the link was healthy before
+		if(topology.routers[i][j].getHealthyLinksList()[direction] == 1):
+			topology.routers[i][j].setLinkHealth(direction, 0)
+			if(direction == 0):
+				topology.routers[i][wrap(j+1,0,X-1)].setLinkHealth(2,0)
+			elif(direction == 1):
+				topology.routers[wrap(i-1,0,Y-1)][j].setLinkHealth(3,0)
+			elif(direction == 2):
+				topology.routers[i][wrap(j-1,0,X-1)].setLinkHealth(0,0)
+			else:
+				topology.routers[wrap(i+1,0,Y-1)][j].setLinkHealth(1,0)
+			return True
+		else:
+			print("Already a fault!")
+			return False
+
+def injectRouterFault(topology, pos):
+	X,Y = topology.getDimensions()
+	j,i = pos	# position of the router
+	if(j > X-1 or i > Y-1):
+		print("Index out of range for given topology")
+		return False
+	else:
+		topology.routers[i][j].setLinkHealthList([0,0,0,0])
+		# modify neighbours
+		r, u, l, d = wrap(j+1,0,X-1), wrap(i-1,0,Y-1), wrap(j-1,0,X-1), wrap(i+1,0,Y-1) 
+		topology.routers[i][l].setLinkHealth(0,0)
+		topology.routers[d][j].setLinkHealth(1,0)
+		topology.routers[i][r].setLinkHealth(2,0)
+		topology.routers[u][j].setLinkHealth(3,0)
+		
 '''
 Injects 'n' random faults
 
@@ -133,7 +174,7 @@ Example Error: Vertex-routers in mesh 'might' get updated to 3 healthy links or 
 Keeping a macro for different topologies, a if-else is very simple to implement.
 I'd prefer a general solution.
 
-A workaround can be to target only healthy links and modify them
+A workaround can be to target only healthy links and modify them, which has been implemented.
 '''
 def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.05):
 	X,Y = topology.getDimensions()
