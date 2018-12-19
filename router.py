@@ -3,6 +3,7 @@ class Router:
         self.linkHealth = linkHealthList
         self.posx, self.posy = pos
         self.threshold = 0.03
+        self.cost = self.heuristic = 0
         # print("New router initialised with position [" + str(self.posx) + ", " + str(self.posy) + "]")
 
     # modifies health for one specific link
@@ -23,6 +24,20 @@ class Router:
             # print("Error: Unexpected length")
             return False
 
+    def setCostHeuristic(self, **kwargs):
+        try:
+            self.cost = kwargs['cost']
+        except:
+            pass
+        try:
+            self.heuristic = kwargs['heuristic']
+        except:
+            pass
+
+    # returns X,Y position, useful for routing packets around
+    def getPosition(self):
+        return self.posx, self.posy
+
     # returns an array of healthy (1) and permanent-hard-faulty (0) links
     def getHealthyLinksList(self):
         listLink = []
@@ -36,6 +51,17 @@ class Router:
         for link in self.getHealthyLinksList():
             count = count +1 if link == 1 else count
         return count
+
+    # returns the total cost
+    # The reason that cost and heuristic are used instead of one varibale is because
+    # some algorithms do not implement the heuristic function, in which case
+    # only Cost function can be used.
+    def getCost(self):
+        return (self.cost + self.heuristic)
+
+    # returns a tuple of cost and heuristic values
+    def getCostHeuristic(self):
+        return (self.cost, self.heuristic)
 
     # returns true if the router can be used to forward a packet in the mentioned direction
     def canTransmit(self, direction):
@@ -70,3 +96,12 @@ class Router:
         # get the link with highest health excluding the source
         destination = listLink.index(max(listLink.pop(source)))
         return destination
+
+def wrap(variable, minval, maxval):
+    # I should use mod here but lite for now
+    if(variable < minval):
+        return maxval-(minval+variable+1)
+    elif(variable > maxval):
+        return minval+(variable-maxval-1)
+    else:
+        return variable
