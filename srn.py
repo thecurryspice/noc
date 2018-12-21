@@ -11,7 +11,7 @@ mesh.initialise()
 topology.injectRandomLinkFaults(mesh, 10)
 topology.injectRandomRouterFaults(mesh, 6)
 # view the map health
-mesh.printTopologyMap(True)
+topology.printTopologyMap(mesh,True)
 
 '''
 Working:
@@ -41,4 +41,4 @@ path = topology.findPath(mesh,source,destination)
 
 print("Tracing path from {0}-->{1}".format(source.getPosition(),destination.getPosition()))
 # display the path
-mesh.showPath(path)
+topology.showPath(mesh,path)

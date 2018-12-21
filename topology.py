@@ -106,70 +106,6 @@ class Mesh:
         # print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f" % (f,h,gx,gy) + " | {0}-->{1}".format(current,destination))
         return g,h
 
-    # prints topology in readable format
-    def printTopologyMap(self, colour):
-        for i in range(self.Y):
-            for j in range(self.X):
-                num = self.routers[i][j].getHealthyLinksCount()
-                if(j < self.X-1):
-                    if colour:
-                        if(num == 0):
-                            print(RED + str(num) + NC + "---", end = "")
-                        elif(num == 1):
-                            print(YELLOW + str(num) + NC + "---", end = "")
-                        else:
-                            print(str(num) + "---", end = "")
-                    else:
-                        if(num == 0):
-                            print(" " + "---", end = "")
-                        else:
-                            print(str(num) + "---", end = "")
-                else:
-                    if colour:
-                        if(num == 0):
-                            print(RED + str(num) + NC)
-                        elif(num == 1):
-                            print(YELLOW + str(num) + NC)
-                        else:
-                            print(str(num))
-                    else:
-                        if(num == 0):
-                            print(" ")
-                        else:
-                            print(str(num))
-            for j in range(self.X):
-                if(i != self.Y - 1):
-                    print("|", end = "   ")
-            print()
-
-    # highlight a path in Green
-    def showPath(self, path):
-        for i in range(self.Y):
-            for j in range(self.X):
-                num = self.routers[i][j].getHealthyLinksCount()
-                if(j < self.X-1):
-                    if (j,i) in path:
-                        print(GREEN + str(num) + NC + "---", end = "")
-                    elif(num == 0):
-                        print(RED + str(num) + NC + "---", end = "")
-                    elif(num == 1):
-                        print(YELLOW + str(num) + NC + "---", end = "")
-                    else:
-                        print(str(num) + "---", end = "")
-                else:
-                    if (j,i) in path:
-                        print(GREEN + str(num) + NC)
-                    elif(num == 0):
-                        print(RED + str(num) + NC)
-                    elif(num == 1):
-                        print(YELLOW + str(num) + NC)
-                    else:
-                        print(num)
-            for j in range(self.X):
-                if(i != self.Y-1):
-                    print("|", end = "   ")
-            print()
-
 
 #################
 # 2D Planar Torus
@@ -189,38 +125,48 @@ class Torus:
                 self.routers[i][j].setLinkHealthList([1,1,1,1])
         return
 
+    # returns the dimensions of the topology
     def getDimensions(self):
         return self.X, self.Y
 
-    # print topology in readable format
-    def printTopologyMap(self, colour):
-        for i in range(self.Y):
-            for j in range(self.X):
-                num = self.routers[i][j].getHealthyLinksCount()
-                if(j < self.X-1):
-                    if colour:
-                        if(num == 0):
-                            print(RED + str(num) + NC + "---", end = "")
-                        elif(num == 1):
-                            print(YELLOW + str(num) + NC + "---", end = "")
-                        else:
-                            print(str(num) + "---", end = "")
-                    else:
-                        print(str(num) + "---", end = "")
+    # returns active neighbouring Router instances
+    def getActiveNeighbours(self, pos):
+        x, y = pos
+        X, Y = self.getDimensions()
+        active = []
+        linkHealths = self.routers[y][x].getHealthyLinksList()
+        r, u, l, d = wrap(x+1,0,X-1), wrap(y-1,0,Y-1), wrap(x-1,0,X-1), wrap(y+1,0,Y-1) 
+        for link in range(4):
+            if(linkHealths[link] == 1):
+                if(link == 0):
+                    active.append(self.routers[y][r])
+                elif(link == 1):
+                    active.append(self.routers[u][x])
+                elif(link == 2):
+                    active.append(self.routers[y][l])
                 else:
-                    if colour:
-                        if(num == 0):
-                            print(RED + str(num) + NC)
-                        elif(num == 1):
-                            print(YELLOW + str(num) + NC)
-                        else:
-                            print(num)
-                    else:
-                        print(num)
-            for j in range(self.X):
-                if(i != self.Y-1):
-                    print("|", end = "   ")
-            print()
+                    active.append(self.routers[d][x])
+        return active
+
+    # calculates heuristic values for path-finding
+    def heuristic(self, current, destination, direction):
+        # Euclidean distance serves as fixed heuristic
+        h = (((current[0]-destination[0])**2 + (current[1]-destination[1])**2)**0.5)
+        
+        # second heuristic depends on the direction of link that is chosen
+        # X : direction can be 0 (right) or 2 (left), (1-direction) is adjusted along conventional X
+        # y : direction can be 1 (up) or 3 (down), (2-direction) is adjusted along conventional Y
+        # Destination is on = dest[0]-curr[0] > 0 ? right : left. (should give-1:1 for heuristic)
+        # Destination is on = dest[1]-curr[1] > 0 ? down : up. (should give 1:-1 for heuristic)
+        gx, gy = (0,0)
+        # if(destination[0] != current[0] and direction%2 == 0):
+        #     gx = (1-direction)*(-1 if (destination[0] - current[0] > 0) else 1)
+        # if(destination[1] != current[1] and direction%2 == 1):
+        #     gy = (2-direction)*(1 if (destination[1] - current[1] > 0) else -1)
+        g = gx + gy
+        f = h+g
+        # print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f" % (f,h,gx,gy) + " | {0}-->{1}".format(current,destination))
+        return g,h
 
 
 ###########################
@@ -349,7 +295,7 @@ def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.05):
         for i in range(2*Y):
             print("\033[E", end = '')
 
-
+# find shortest path between two nodes
 def findPath(topology, source, destination):
     openList = []
     closedList = []
@@ -411,6 +357,78 @@ def findPath(topology, source, destination):
     # return nothing if no path found
     return []
 
+# highlight a path in Green
+def showPath(topology, path):
+    for i in range(topology.Y):
+        for j in range(topology.X):
+            num = topology.routers[i][j].getHealthyLinksCount()
+            linkRight = topology.routers[i][j].getHealthyLinksList()[0]
+            if(j < topology.X-1):
+                if (j,i) in path:
+                    print(GREEN + str(num) + NC, end = "")
+                # elif(num == 0):
+                #     print(RED + str(num) + NC, end = "")
+                # elif(num == 1):
+                #     print(YELLOW + str(num) + NC, end = "")
+                else:
+                    print(str(num), end = "")
+                print("---", end = "") if(linkRight == 1) else print("   ", end = "")    
+            else:
+                if (j,i) in path:
+                    print(GREEN + str(num) + NC)
+                # elif(num == 0):
+                #     print(RED + str(num) + NC)
+                # elif(num == 1):
+                #     print(YELLOW + str(num) + NC)
+                else:
+                    print(num)
+        for j in range(topology.X):
+            if(i != topology.Y-1):
+                linkDown = topology.routers[i][j].getHealthyLinksList()[3]
+                print("|", end = "   ") if(linkDown == 1) else print("    ", end = "")
+        print()
+
+# prints topology in readable format
+def printTopologyMap(topology, colour):
+    for i in range(topology.Y):
+        for j in range(topology.X):
+            num = topology.routers[i][j].getHealthyLinksCount()
+            linkRight = topology.routers[i][j].getHealthyLinksList()[0]
+            if(j < topology.X-1):
+                if colour:
+                    if(num == 0):
+                        print(RED + str(num) + NC, end = "")
+                    elif(num == 1):
+                        print(YELLOW + str(num) + NC, end = "")
+                    else:
+                        print(str(num), end = "")
+                    print("---", end = "") if(linkRight == 1) else print("   ", end = "")
+                else:
+                    if(num == 0):
+                        print(" ", end = "")
+                    else:
+                        print(str(num), end = "")
+                    print("---", end = "") if(linkRight == 1) else print("   ", end = "")
+            else:
+                if colour:
+                    if(num == 0):
+                        print(RED + str(num) + NC)
+                    elif(num == 1):
+                        print(YELLOW + str(num) + NC)
+                    else:
+                        print(str(num))
+                else:
+                    if(num == 0):
+                        print(" ")
+                    else:
+                        print(str(num))
+        for j in range(topology.X):
+            if(i != topology.Y - 1):
+                linkDown = topology.routers[i][j].getHealthyLinksList()[3]
+                print("|", end = "   ") if(linkDown == 1) else print("    ", end = "")
+        print()
+
+# helper function for dealing with wrap around links
 def wrap(variable, minval, maxval):
     # I should use mod here but lite for now
     if(variable < minval):
