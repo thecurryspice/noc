@@ -4,6 +4,7 @@ class Router:
         self.posx, self.posy = pos
         self.threshold = 0.03
         self.cost = self.heuristic = 0
+        self.parent = None
         # print("New router initialised with position [" + str(self.posx) + ", " + str(self.posy) + "]")
 
     # modifies health for one specific link
@@ -81,11 +82,11 @@ class Router:
         return [r,t]
     
     # checks whether a router has been isolated
-    def checkIsolated(self):
+    def isIsolated(self):
         return True if (self.getHealthyLinksCount() == 0) else False
     
     # checks whether the router has only one active link
-    def checkTerminus(self):
+    def isTerminus(self):
         count = self.getHealthyLinksCount()
         return True if count == 1 else False
 
