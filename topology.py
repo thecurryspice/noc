@@ -297,6 +297,9 @@ def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.05):
 
 # find shortest path between two nodes
 def findPath(topology, source, destination):
+    # customary check
+    if(source.isIsolated() or destination.isIsolated()):
+        return []
     openList = []
     closedList = []
     openList.append(source)
