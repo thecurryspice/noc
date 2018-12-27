@@ -101,7 +101,7 @@ Although the class is fairly flexible, a need for a derived class is possible. R
 	* real header data stack
 	* various metrics like hop-count, latency, etc.
 * Support for arbitrary number of links for each router to extend support for MoT or BFT
-* Consider Router-weighting for path traversal.
+* ~Consider Router-weighting for path traversal~
 * Integrate Packet with traversal in the Router function-parameters
 * Add FIFO buffer to router and consider Packet's size in the FIFO
 * Print links in topology map according to link-health

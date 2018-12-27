@@ -5,6 +5,7 @@ class Router:
         self.threshold = 0.03
         self.cost = self.heuristic = 0
         self.parent = None
+        self.weight = 1
         # print("New router initialised with position [" + str(self.posx) + ", " + str(self.posy) + "]")
 
     # modifies health for one specific link
@@ -35,6 +36,9 @@ class Router:
         except:
             pass
 
+    def setWeight(self, weight):
+        self.weight = weight
+
     # returns X,Y position, useful for routing packets around
     def getPosition(self):
         return self.posx, self.posy
@@ -58,11 +62,11 @@ class Router:
     # some algorithms do not implement the heuristic function, in which case
     # only Cost function can be used.
     def getCost(self):
-        return (self.cost + self.heuristic)
+        return (self.weight*(self.cost + self.heuristic))
 
     # returns a tuple of cost and heuristic values
     def getCostHeuristic(self):
-        return (self.cost, self.heuristic)
+        return (self.weight*self.cost, self.weight*self.heuristic)
 
     # returns true if the router can be used to forward a packet in the mentioned direction
     def canTransmit(self, direction):
