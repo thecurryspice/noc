@@ -43,7 +43,7 @@ As stated, the only exception to this is when accessing routers directly.
 The module consists of a path-finding functionality that can be accessed using<br>
 `findPath(topology, source, destination)`, which returns the first-hit shortest path between two nodes using a modified A* approach.
 The parameters `source` and `destination` are not positions but `Router` objects. This has been done to improve readability.<br>
-Each topology contains a heuristic function that determine the path-finding behaviour. Custom topologies need to include this heuristic to make use of this functionality.
+Each topology contains a heuristic function that determines the path-finding behaviour. Custom topologies need to include their unique heuristic to make use of this functionality.
 
 `showPath(topology, path)` prints the map in a nice graphical view on a terminal console, with the path highlighted in Green.
 
@@ -52,6 +52,17 @@ Each topology contains a heuristic function that determine the path-finding beha
 Router or Link faults can be injected easily either by targeting individual routers/links or generating *n* random faults.<br>
 
 ### Individual Targeting
+
+There are two ways to achieve this:<br>
+
+#### Using Specified Functions
+
+`topology.injectRouterFault(topo, pos)`<br>
+or<br>
+`topology.injectLinkFault(topo, pos, direction)`<br>
+where the parameter `topo` is the topology instance, `pos` is a tuple containing position as (x,y), and `direction` is the **n**th link to be targeted.
+
+#### Using Internal Methods
 
 `topo.routers[2][1].setLinkHealthList([1,1,0,1])`<br>
 
@@ -77,8 +88,8 @@ The topology class contains direct functions for generating 'N' random faults us
 
 # Router
 
-Once the router has been accessed as an element in a 2D matrix, all functions related to packet-traversal can be used to simulate handling an actual packet.<br>
-As of now, the Packet object is not accepted in any of Router's functions. Simulations can still be done the usual way using `canTransmit()`, `canReceive()`, and `route()`.<br>
+The Router class is of huge importance while designing custom topologies.<br>
+Although the class is fairly flexible, a need for a derived class is possible. Remember that writing a custom Router class might be of immense help for working through a custom topology.<br>
 
 ---
 
@@ -90,6 +101,7 @@ As of now, the Packet object is not accepted in any of Router's functions. Simul
 	* real header data stack
 	* various metrics like hop-count, latency, etc.
 * Support for arbitrary number of links for each router to extend support for MoT or BFT
+* Consider Router-weighting for path traversal.
 * Integrate Packet with traversal in the Router function-parameters
 * Add FIFO buffer to router and consider Packet's size in the FIFO
 * Print links in topology map according to link-health
