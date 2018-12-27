@@ -30,6 +30,23 @@ A nicer and more human-readable view can be obtained on the console using<br>
 `topo.printTopologyMap(colour)`<br>
 Setting `colour` to `True` outputs faulty routers in Red and terminal routers in Yellow. Setting it to `False` outputs faulty routers as empty spaces.
 
+## Indexing
+
+All routers forming the topology can be accessed using column and row indices using:<br>
+`topo.routers[y][x]`<br>
+Notice that the first index corresponds to the **y**th row and the second index to the **x**th column. This indexing is indeed, different from the conventional (x,y) addressing in graphs.<br>
+However, the module maintains this convention (x,y) when accepting position as a parameter or returning position as a tuple.<br>
+As stated, the only exception to this is when accessing routers directly.
+
+## Path Finding
+
+The module consists of a path-finding functionality that can be accessed using<br>
+`findPath(topology, source, destination)`, which returns the first-hit shortest path between two nodes using a modified A* approach.
+The parameters `source` and `destination` are not positions but `Router` objects. This has been done to improve readability.<br>
+Each topology contains a heuristic function that determine the path-finding behaviour. Custom topologies need to include this heuristic to make use of this functionality.
+
+`showPath(topology, path)` prints the map in a nice graphical view on a terminal console, with the path highlighted in Green.
+
 ## Fault Injection
 
 Router or Link faults can be injected easily either by targeting individual routers/links or generating *n* random faults.<br>
@@ -46,7 +63,7 @@ Here, the function parameter is a list of links' healths in the order right([0])
 `topo.routers[2][1].setLinkHealth(0,0.4)`<br>
 
 Here, the function parameters are (direction,linkHealth).<br>
-`[0,0.4]` means that the link pointing to the right of the router indexed at X=2, Y=1 has a health of 0.4 (out of 1).
+`[0,0.4]` means that the link pointing to the right of the router indexed at X=1, Y=2 has a health of 0.4 (out of 1).
 
 ### Random Fault Generation
 
