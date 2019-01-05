@@ -151,7 +151,10 @@ class Torus:
     # calculates heuristic values for path-finding
     def heuristic(self, current, destination, direction):
         # Euclidean distance serves as fixed heuristic
-        h = (((current[0]-destination[0])**2 + (current[1]-destination[1])**2)**0.5)
+        dx = min(destination[0]-current[0], self.X-destination[0]+current[0])
+        dy = min(destination[1]-current[1], self.Y-destination[1]+current[1])
+        h = ((dx**2 + dy**2)**0.5)
+        # h = (((abs(current[0]-destination[0])/2)**2 + (abs(current[1]-destination[1])/2)**2)**0.5)
         
         # second heuristic depends on the direction of link that is chosen
         # X : direction can be 0 (right) or 2 (left), (1-direction) is adjusted along conventional X
@@ -159,11 +162,11 @@ class Torus:
         # Destination is on = dest[0]-curr[0] > 0 ? right : left. (should give-1:1 for heuristic)
         # Destination is on = dest[1]-curr[1] > 0 ? down : up. (should give 1:-1 for heuristic)
         gx, gy = (0,0)
-        # if(destination[0] != current[0] and direction%2 == 0):
-        #     gx = (1-direction)*(-1 if (destination[0] - current[0] > 0) else 1)
-        # if(destination[1] != current[1] and direction%2 == 1):
-        #     gy = (2-direction)*(1 if (destination[1] - current[1] > 0) else -1)
-        g = gx + gy
+        if(destination[0] != current[0] and direction%2 == 0):
+            gx = (1-direction)*(-1 if (destination[0] - current[0] > 0) else 1)
+        if(destination[1] != current[1] and direction%2 == 1):
+            gy = (2-direction)*(1 if (destination[1] - current[1] > 0) else -1)
+        g = gx*dx + gy*dy
         f = h+g
         # print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f" % (f,h,gx,gy) + " | {0}-->{1}".format(current,destination))
         return g,h
@@ -248,7 +251,7 @@ def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.05):
             else:
                 topology.routers[wrap(i+1,0,Y-1)][j].setLinkHealth(1,0)
             if(animate):
-                topology.printTopologyMap(True)
+                printTopologyMap(topology, True)
                 sleep(frameDelay)
                 for c in range(2*Y):
                     print("\033[F", end = '')
@@ -256,7 +259,7 @@ def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.05):
             try:
                 injectRandomLinkFaults(topology,1)
             except RuntimeError:
-                topology.printTopologyMap(True)
+                printTopologyMap(topology, True)
                 break
     if(animate):
         for i in range(2*Y):
@@ -287,7 +290,7 @@ def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.05):
         topology.routers[u][j].setLinkHealth(3,0)
         original.remove(choice)
         if(animate):
-            topology.printTopologyMap(True)
+            printTopologyMap(topology, True)
             sleep(frameDelay)
             for c in range(2*Y):
                 print("\033[F", end = '')
@@ -355,7 +358,7 @@ def findPath(topology, source, destination):
                 #if child == openNode and child.getCost() > openNode.getCost():
                 if child == openNode and child.getCostHeuristic()[1] > openNode.getCostHeuristic()[1]:
                     continue
-            
+
             openList.append(child)
     # return nothing if no path found
     return []
