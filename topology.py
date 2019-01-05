@@ -155,7 +155,7 @@ class Torus:
         dy = min(destination[1]-current[1], self.Y-destination[1]+current[1])
         h = ((dx**2 + dy**2)**0.5)
         # h = (((abs(current[0]-destination[0])/2)**2 + (abs(current[1]-destination[1])/2)**2)**0.5)
-        
+
         # second heuristic depends on the direction of link that is chosen
         # X : direction can be 0 (right) or 2 (left), (1-direction) is adjusted along conventional X
         # y : direction can be 1 (up) or 3 (down), (2-direction) is adjusted along conventional Y
@@ -224,23 +224,28 @@ I'd prefer a general solution.
 
 A workaround can be to target only healthy links and modify them, which has been implemented.
 '''
-def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.05):
+def injectRandomLinkFaults(topology, n):
     X,Y = topology.getDimensions()
     # a 2D planar topology will have 2*M*N links. Mesh will have M+N-2 less links.
     if n > 2*X*Y:
         raise ValueError("Too many elements. No faults injected.")
         return
-    original = [i for i in range(X*Y)]
-    for k in range(n):
-        # choose a random router
-        choice = random.choice(original)
+    faults = []
+    original = [i for i in range(2*X*Y)]
+    while (n > 0):
+        try:
+            # choose a random router
+            choice = random.choice(original)
+        except:
+            print("Couldn't inject " + str(n) + " faults")
+            return faults
         # get coordinates
-        i = int(choice/X)
-        j = int(choice%X)
-        # choose a random link
-        link = int(4*random.random())
+        i = int(choice/(2*X))
+        j = int((choice%(2*X))/2)
+        link = int((choice%(2*X))%2)
         # check if the link is healthy
         if(topology.routers[i][j].getHealthyLinksList()[link] == 1):
+            faults.append(((j,i), link))
             topology.routers[i][j].setLinkHealth(link, 0)
             if(link == 0):
                 topology.routers[i][wrap(j+1,0,X-1)].setLinkHealth(2,0)
@@ -250,21 +255,14 @@ def injectRandomLinkFaults(topology, n, animate=False, frameDelay=0.05):
                 topology.routers[i][wrap(j-1,0,X-1)].setLinkHealth(0,0)
             else:
                 topology.routers[wrap(i+1,0,Y-1)][j].setLinkHealth(1,0)
-            if(animate):
-                printTopologyMap(topology, True)
-                sleep(frameDelay)
-                for c in range(2*Y):
-                    print("\033[F", end = '')
+            # remove choice and decrement counter
+            original.remove(choice)
+            n = n-1
         else:
-            try:
-                injectRandomLinkFaults(topology,1)
-            except RuntimeError:
-                printTopologyMap(topology, True)
-                break
-    if(animate):
-        for i in range(2*Y):
-            print("\033[E", end = '')
-        # [round(random.random()),round(random.random()),round(random.random()),round(random.random())]
+            # remove choice
+            original.remove(choice)
+    if len(faults) > 0:
+        return faults
 
 def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.05):
     X,Y = topology.getDimensions()
@@ -302,9 +300,10 @@ def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.05):
 def findPath(topology, source, destination):
     # customary check
     if(source.isIsolated() or destination.isIsolated()):
-        return []
+        return ([], "inf")
     openList = []
     closedList = []
+    pathCost = 0
     openList.append(source)
     while len(openList) > 0:
         # fetch current
@@ -312,6 +311,7 @@ def findPath(topology, source, destination):
         currentIndex = 0
         for index, item in enumerate(openList):
             if item.getCost() < currentNode.getCost():
+                pathCost = pathCost + item.getCost()
                 currentNode = item
                 currentIndex = index
         # pop off current from open and add to closed
@@ -327,7 +327,7 @@ def findPath(topology, source, destination):
                 # print(topology.RED + str(current.getPosition()) + topology.NC)                
                 path.append(current.getPosition())
                 current = current.parent
-            return path[::-1]
+            return (path[::-1], pathCost)
 
         # create children
         children = []
@@ -361,7 +361,7 @@ def findPath(topology, source, destination):
 
             openList.append(child)
     # return nothing if no path found
-    return []
+    return ([], "inf")
 
 # highlight a path in Green
 def showPath(topology, path):
