@@ -94,7 +94,7 @@ class Mesh:
         # second heuristic depends on the direction of link that is chosen
         # X : direction can be 0 (right) or 2 (left), (1-direction) is adjusted along conventional X
         # y : direction can be 1 (up) or 3 (down), (2-direction) is adjusted along conventional Y
-        # Destination is on = dest[0]-curr[0] > 0 ? right : left. (should give-1:1 for heuristic)
+        # Destination is on = dest[0]-curr[0] > 0 ? right : left. (should give -1:1 for heuristic)
         # Destination is on = dest[1]-curr[1] > 0 ? down : up. (should give 1:-1 for heuristic)
         gx, gy = (0,0)
         if(destination[0] != current[0] and direction%2 == 0):
@@ -151,19 +151,20 @@ class Torus:
     # calculates heuristic values for path-finding
     def heuristic(self, current, destination, direction):
         # Euclidean distance calculated on a circular path serves as fixed heuristic
-        dx = min(destination[0]-current[0], self.X-destination[0]+current[0])
-        dy = min(destination[1]-current[1], self.Y-destination[1]+current[1])
+        dx,dy = 0,0
+        if(destination[0] != current[0]):
+            dx = min(destination[0]-current[0], destination[0]-current[0]-self.X)
+        if(destination[1] != current[1]):
+            dy = min(destination[1]-current[1], destination[1]-current[1]-self.Y)
         h = ((dx**2 + dy**2)**0.5)
-
-        g = 0
         gx, gy = (0,0)
         if(destination[0] != current[0] and direction%2 == 0):
             gx = (1-direction)*(-1 if (destination[0] - current[0] > 0) else 1)
-            g = g+gx*dx/abs(dx)
         if(destination[1] != current[1] and direction%2 == 1):
             gy = (2-direction)*(1 if (destination[1] - current[1] > 0) else -1)
-            g = g+gy*dy/abs(dy)
+        g = gx + gy
         f = h+g
+        # print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f" % (f,h,gx,gy) + " | {0}-->{1}".format(current,destination))
         return g,h
 
 
@@ -306,7 +307,7 @@ def findPath(topology, source, destination):
         currentIndex = 0
         for index, item in enumerate(openList):
             if item.getCost() < currentNode.getCost():
-                pathCost = pathCost + item.getCost()
+                # print("Searching node "+str(item.getPosition()))
                 currentNode = item
                 currentIndex = index
         # pop off current from open and add to closed
@@ -321,6 +322,7 @@ def findPath(topology, source, destination):
             while current is not None:
                 # print(topology.RED + str(current.getPosition()) + topology.NC)                
                 path.append(current.getPosition())
+                pathCost = pathCost + current.getCost()
                 current = current.parent
             return (path[::-1], pathCost)
 
