@@ -64,6 +64,9 @@ class Router:
     def getCost(self):
         return (self.weight*(self.cost + self.heuristic))
 
+    def getWeight(self):
+        return self.weight
+
     # returns a tuple of cost and heuristic values
     def getCostHeuristic(self):
         return (self.weight*self.cost, self.weight*self.heuristic)

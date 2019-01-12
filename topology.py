@@ -2,6 +2,7 @@ from __future__ import print_function
 import random
 from time import sleep
 from router import *
+import pdb
 
 BLUE =  '\033[1;38;2;32;64;227m'
 RED =   '\033[1;38;2;227;32;32m'
@@ -167,6 +168,12 @@ class Torus:
         # print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f" % (f,h,gx,gy) + " | {0}-->{1}".format(current,destination))
         return g,h
 
+    def clearPathInfo(self):
+        for i in range(self.Y):
+            for j in range(self.X):
+                self.routers[i][j].setCostHeuristic(cost=0, heuristic=0)
+                self.routers[i][j].parent = None
+
 
 ###########################
 # Common topology functions
@@ -293,7 +300,7 @@ def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.05):
             print("\033[E", end = '')
 
 # find shortest path between two nodes
-def findPath(topology, source, destination):
+def findPath(topology, source, destination, pathWeight = 1):
     # customary check
     if(source.isIsolated() or destination.isIsolated()):
         return ([], "inf")
@@ -320,9 +327,10 @@ def findPath(topology, source, destination):
             current = currentNode
             # pdb.set_trace()
             while current is not None:
-                # print(topology.RED + str(current.getPosition()) + topology.NC)                
+                # print(RED + str(current.getPosition()) + NC)                
                 path.append(current.getPosition())
                 pathCost = pathCost + current.getCost()
+                current.setWeight(current.getWeight()*pathWeight)
                 current = current.parent
             return (path[::-1], pathCost)
 
@@ -361,6 +369,7 @@ def findPath(topology, source, destination):
     return ([], "inf")
 
 # highlight a path in Green
+# coloured outputs can get pretty ugly in terminals not supporting colour escape codes
 def showPath(topology, path):
     for i in range(topology.Y):
         for j in range(topology.X):
@@ -392,6 +401,7 @@ def showPath(topology, path):
         print()
 
 # prints topology in readable format
+# coloured outputs can get pretty ugly in terminals not supporting colour escape codes
 def printTopologyMap(topology, colour):
     for i in range(topology.Y):
         for j in range(topology.X):
