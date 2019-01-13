@@ -102,10 +102,19 @@ class Mesh:
             gx = (1-direction)*(-1 if (destination[0] - current[0] > 0) else 1)
         if(destination[1] != current[1] and direction%2 == 1):
             gy = (2-direction)*(1 if (destination[1] - current[1] > 0) else -1)
-        g = gx + gy
+        currentRouter = self.routers[current[1]][current[0]]
+        linkWeight = currentRouter.getLinkWeight(direction)
+        g = linkWeight + gx + gy
         f = h+g
-        # print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f" % (f,h,gx,gy) + " | {0}-->{1}".format(current,destination))
+        print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f, LW: %d, Dir: %d" % (f,h,gx,gy,linkWeight, direction) + " | {0}-->{1}".format(current,destination))
         return g,h
+
+    # for clearing the path info : used when searching for multiple paths in one run
+    def clearPathInfo(self):
+        for i in range(self.Y):
+            for j in range(self.X):
+                self.routers[i][j].setCostHeuristic(cost=0, heuristic=0)
+                self.routers[i][j].parent = None
 
 
 #################
@@ -163,11 +172,15 @@ class Torus:
             gx = (1-direction)*(-1 if (destination[0] - current[0] > 0) else 1)
         if(destination[1] != current[1] and direction%2 == 1):
             gy = (2-direction)*(1 if (destination[1] - current[1] > 0) else -1)
-        g = gx + gy
+        # pdb.set_trace()
+        currentRouter = self.routers[current[1]][current[0]]
+        linkWeight = currentRouter.getLinkWeight(direction)
+        g = linkWeight + gx + gy
         f = h+g
-        # print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f" % (f,h,gx,gy) + " | {0}-->{1}".format(current,destination))
+        print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f, LW: %d, Dir: %d" % (f,h,gx,gy,linkWeight, direction) + " | {0}-->{1}".format(current,destination))
         return g,h
 
+    # for clearing the path info : used when searching for multiple paths in one run
     def clearPathInfo(self):
         for i in range(self.Y):
             for j in range(self.X):
@@ -300,7 +313,7 @@ def injectRandomRouterFaults(topology, n, animate=False, frameDelay=0.05):
             print("\033[E", end = '')
 
 # find shortest path between two nodes
-def findPath(topology, source, destination, pathWeight = 1):
+def findPath(topology, source, destination, pathWeight = 1, linkWeight = 1):
     # customary check
     if(source.isIsolated() or destination.isIsolated()):
         return ([], "inf")
@@ -331,6 +344,21 @@ def findPath(topology, source, destination, pathWeight = 1):
                 path.append(current.getPosition())
                 pathCost = pathCost + current.getCost()
                 current.setWeight(current.getWeight()*pathWeight)
+                ###
+                # will work only for Mesh
+                x1,y1 = current.getPosition()
+                try:
+                    x2,y2 = current.parent.getPosition()
+                except AttributeError:
+                    pass
+                else:
+                    if(x1 == x2):
+                        direction = 3 if y2>y1 else 1
+                    else:
+                        direction = 0 if x2>x1 else 2
+                ###
+                    current.setLinkWeight(direction, linkWeight*current.getLinkWeight(direction))
+                    print(current.getPosition(), direction, current.getLinkWeight(direction))
                 current = current.parent
             return (path[::-1], pathCost)
 
@@ -349,12 +377,14 @@ def findPath(topology, source, destination, pathWeight = 1):
             # generate heuristic values
             dx = child.getPosition()[0] - currentNode.getPosition()[0]
             dy = child.getPosition()[1] - currentNode.getPosition()[1]
+            ### works only for mesh
             if dx == 1 and dy == 1:
                 raise WTF_Error("What The Frame: Something is not right")
             if dx is not 0:
                 direction = 0 if (dx == 1) else 2
             if dy is not 0:
                 direction = 3 if (dx == 1) else 1
+            ###
             # heuristic is subjective to topology
             g,h = topology.heuristic(child.getPosition(),destination.getPosition(),direction)
             child.setCostHeuristic(cost=g, heuristic=h)

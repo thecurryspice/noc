@@ -6,6 +6,7 @@ class Router:
         self.cost = self.heuristic = 0
         self.parent = None
         self.weight = 1
+        self.linkWeightList = [1,1,1,1]
         # print("New router initialised with position [" + str(self.posx) + ", " + str(self.posy) + "]")
 
     # modifies health for one specific link
@@ -26,6 +27,7 @@ class Router:
             # print("Error: Unexpected length")
             return False
 
+    # sets cost and heursitic values stored in the router
     def setCostHeuristic(self, **kwargs):
         try:
             self.cost = kwargs['cost']
@@ -36,8 +38,13 @@ class Router:
         except:
             pass
 
+    # sets router weight
     def setWeight(self, weight):
         self.weight = weight
+
+    # sets the link weight
+    def setLinkWeight(self, direction, weight):
+        self.linkWeightList[direction] = weight
 
     # returns X,Y position, useful for routing packets around
     def getPosition(self):
@@ -64,8 +71,13 @@ class Router:
     def getCost(self):
         return (self.weight*(self.cost + self.heuristic))
 
+    # returns router weight
     def getWeight(self):
         return self.weight
+
+    # returns the link weight
+    def getLinkWeight(self, direction):
+        return self.linkWeightList[direction]
 
     # returns a tuple of cost and heuristic values
     def getCostHeuristic(self):
