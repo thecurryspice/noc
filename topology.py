@@ -386,7 +386,7 @@ def findPath(topology, source, destination, pathWeight = 1, linkWeight = 1):
                 direction = 3 if (dx == 1) else 1
             ###
             # heuristic is subjective to topology
-            g,h = topology.heuristic(child.getPosition(),destination.getPosition(),direction)
+            g,h = topology.heuristic(currentNode.getPosition(),destination.getPosition(),direction)
             child.setCostHeuristic(cost=g, heuristic=h)
 
             for openNode in openList:
