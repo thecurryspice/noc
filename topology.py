@@ -88,6 +88,22 @@ class Mesh:
                     active.append(self.routers[d][x])
         return active
 
+    # returns router at given address
+    def routerAt(self, posx, posy):
+        return self.routers[posy][posx]
+
+    # returns relative direction of destination wrt source, written specifically for use in findPath()
+    def getRelativeDirection(self, source, destination):
+        # just get relative position without any link health checks
+        # findPath() is already doing that to create children
+        x1, y1 = source.getPosition()
+        x2, y2 = destination.getPosition()
+        if(y2 == y1):
+            return 0 if x2>x1 else 2
+        else:
+            return 3 if y2>y1 else 1
+
+    # calculates heuristic values for path-finding
     def heuristic(self, current, destination, direction):
         # Euclidean distance serves as fixed heuristic
         h = (((current[0]-destination[0])**2 + (current[1]-destination[1])**2)**0.5)
@@ -98,15 +114,15 @@ class Mesh:
         # Destination is on = dest[0]-curr[0] > 0 ? right : left. (should give -1:1 for heuristic)
         # Destination is on = dest[1]-curr[1] > 0 ? down : up. (should give 1:-1 for heuristic)
         gx, gy = (0,0)
-        if(destination[0] != current[0] and direction%2 == 0):
-            gx = (1-direction)*(-1 if (destination[0] - current[0] > 0) else 1)
-        if(destination[1] != current[1] and direction%2 == 1):
-            gy = (2-direction)*(1 if (destination[1] - current[1] > 0) else -1)
         currentRouter = self.routers[current[1]][current[0]]
         linkWeight = currentRouter.getLinkWeight(direction)
-        g = linkWeight + gx + gy
+        if(destination[0] != current[0] and direction%2 == 0):
+            gx = (1-direction)*linkWeight*(1 if (destination[0] - current[0] > 0) else 2)
+        if(destination[1] != current[1] and direction%2 == 1):
+            gy = (2-direction)*linkWeight*(2 if (destination[1] - current[1] > 0) else 1)
+        g = gx + gy
         f = h+g
-        print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f, LW: %d, Dir: %d" % (f,h,gx,gy,linkWeight, direction) + " | {0}-->{1}".format(current,destination))
+        # print("F: %.3f, H: %.3f, G: %.3f, LW: %d, Dir: %d" % (f,h,g,linkWeight,direction) + " | {0}-->{1}".format(current,destination))
         return g,h
 
     # for clearing the path info : used when searching for multiple paths in one run
@@ -158,6 +174,27 @@ class Torus:
                     active.append(self.routers[d][x])
         return active
 
+    # returns router at given address
+    def routerAt(self, posx, posy):
+        return self.routers[posy][posx]
+
+    # returns relative direction of destination wrt source, written specifically for use in findPath()
+    def getRelativeDirection(self, source, destination):
+        # just get relative position without any link health checks
+        # findPath() is already doing that to create children
+        x1, y1 = source.getPosition()
+        x2, y2 = destination.getPosition()
+        # print((x2,y2),(x1,y1))
+        # print(abs(x2-x1), self.getDimensions()[0], self.getDimensions()[0])
+        if(x2>x1):
+            return 2 if abs(x1-x2) == self.getDimensions()[0]-1 else 0
+        elif(x2<x1):
+            return 0 if abs(x1-x2) == self.getDimensions()[0]-1 else 2
+        elif(y2>y1):
+            return 1 if abs(y1-y2) == self.getDimensions()[1]-1 else 3
+        else:
+            return 3 if abs(y1-y2) == self.getDimensions()[1]-1 else 1
+
     # calculates heuristic values for path-finding
     def heuristic(self, current, destination, direction):
         # Euclidean distance calculated on a circular path serves as fixed heuristic
@@ -168,16 +205,16 @@ class Torus:
             dy = min(destination[1]-current[1], destination[1]-current[1]-self.Y)
         h = ((dx**2 + dy**2)**0.5)
         gx, gy = (0,0)
-        if(destination[0] != current[0] and direction%2 == 0):
-            gx = (1-direction)*(-1 if (destination[0] - current[0] > 0) else 1)
-        if(destination[1] != current[1] and direction%2 == 1):
-            gy = (2-direction)*(1 if (destination[1] - current[1] > 0) else -1)
-        # pdb.set_trace()
         currentRouter = self.routers[current[1]][current[0]]
         linkWeight = currentRouter.getLinkWeight(direction)
-        g = linkWeight + gx + gy
+        if(destination[0] != current[0] and direction%2 == 0):
+            gx = linkWeight*(1 if (destination[0] - current[0] > 0) else 2)
+        if(destination[1] != current[1] and direction%2 == 1):
+            gy = linkWeight*(2 if (destination[1] - current[1] > 0) else 1)
+        # pdb.set_trace()
+        g = gx + gy
         f = h+g
-        print("F: %.3f, H: %.3f, Gx: %.3f, Gy: %.3f, LW: %d, Dir: %d" % (f,h,gx,gy,linkWeight, direction) + " | {0}-->{1}".format(current,destination))
+        print("F: %.3f, H: %.3f, G: %.3f, LW: %d, Dir: %d" % (f,h,g,linkWeight, direction) + " | {0}-->{1}".format(current,destination))
         return g,h
 
     # for clearing the path info : used when searching for multiple paths in one run
@@ -344,21 +381,17 @@ def findPath(topology, source, destination, pathWeight = 1, linkWeight = 1):
                 path.append(current.getPosition())
                 pathCost = pathCost + current.getCost()
                 current.setWeight(current.getWeight()*pathWeight)
-                ###
-                # will work only for Mesh
-                x1,y1 = current.getPosition()
                 try:
-                    x2,y2 = current.parent.getPosition()
+                    direction = topology.getRelativeDirection(current, current.parent)
                 except AttributeError:
                     pass
                 else:
-                    if(x1 == x2):
-                        direction = 3 if y2>y1 else 1
-                    else:
-                        direction = 0 if x2>x1 else 2
-                ###
+                    pdir = (direction+2)%4
+                    current.parent.setLinkWeight(pdir, linkWeight*current.parent.getLinkWeight(pdir))
                     current.setLinkWeight(direction, linkWeight*current.getLinkWeight(direction))
-                    print(current.getPosition(), direction, current.getLinkWeight(direction))
+                    # print(current.getPosition(), direction, current.getLinkWeight(direction))
+                    # print(current.parent.getPosition(), pdir, current.parent.getLinkWeight(pdir), current.parent.getCostHeuristic())
+                # pdb.set_trace()
                 current = current.parent
             return (path[::-1], pathCost)
 
@@ -370,27 +403,20 @@ def findPath(topology, source, destination, pathWeight = 1, linkWeight = 1):
             children.append(newNode)
 
         for child in children:
-            # is this a valid way to check for child's availability in the closedList
+            # is this a valid way to check for child's availability in the closedList?
             if child in closedList:
                 continue
             
             # generate heuristic values
             dx = child.getPosition()[0] - currentNode.getPosition()[0]
             dy = child.getPosition()[1] - currentNode.getPosition()[1]
-            ### works only for mesh
-            if dx == 1 and dy == 1:
-                raise WTF_Error("What The Frame: Something is not right")
-            if dx is not 0:
-                direction = 0 if (dx == 1) else 2
-            if dy is not 0:
-                direction = 3 if (dx == 1) else 1
-            ###
+            direction = topology.getRelativeDirection(currentNode, child)
             # heuristic is subjective to topology
-            g,h = topology.heuristic(currentNode.getPosition(),destination.getPosition(),direction)
+            g,h = topology.heuristic(child.getPosition(),destination.getPosition(),direction)
             child.setCostHeuristic(cost=g, heuristic=h)
 
             for openNode in openList:
-                #if child == openNode and child.getCost() > openNode.getCost():
+                # if child == openNode and child.getCost() > openNode.getCost():
                 if child == openNode and child.getCostHeuristic()[1] > openNode.getCostHeuristic()[1]:
                     continue
 
@@ -480,4 +506,3 @@ def wrap(variable, minval, maxval):
         return minval+(variable-maxval-1)
     else:
         return variable
-
